@@ -1,0 +1,60 @@
+// Clear any existing intervals
+for (var i = 1; i < 99999; i++) window.clearInterval(i);
+
+var video = document.querySelector('video');
+var normalSpeed = 1.0;
+var fastSpeed = 16.0;
+var pauseInterval = 10; // Pause every 10 seconds of playback
+var pauseBeforeEnd = 10; // Also pause before the end
+var lastPauseTime = 0; // Track when we last paused
+var hasPausedForEnd = false;
+
+console.log('🎬 Fast speed with regular pauses...');
+
+// Set initial fast speed
+video.playbackRate = fastSpeed;
+console.log('⚡ Starting at ' + fastSpeed + 'x speed');
+
+// Monitor and pause regularly
+window.smartSpeedInterval = setInterval(function() {
+    var v = document.querySelector('video');
+    if (!v) return;
+    
+    var currentTime = v.currentTime;
+    var timeRemaining = v.duration - currentTime;
+    
+    // Pause every 10 seconds of video time
+    if (currentTime - lastPauseTime >= pauseInterval && timeRemaining > pauseBeforeEnd && !v.paused) {
+        v.pause();
+        lastPauseTime = currentTime;
+        console.log('⏸️ REGULAR PAUSE at ' + currentTime.toFixed(1) + 's');
+        
+        // Auto-resume after 1 second
+        setTimeout(function() {
+            v.play().then(function() {
+                v.playbackRate = fastSpeed;
+                console.log('▶️ Resumed at ' + fastSpeed + 'x');
+            }).catch(function(err) {
+                console.log('❌ Resume failed:', err);
+            });
+        }, 1000);
+    }
+    
+    // Final pause before end
+    if (timeRemaining <= pauseBeforeEnd && !hasPausedForEnd) {
+        v.pause();
+        v.playbackRate = normalSpeed;
+        hasPausedForEnd = true;
+        console.log('⏸️ FINAL PAUSE at ' + currentTime.toFixed(1) + 's (' + pauseBeforeEnd + 's before end)');
+        console.log('▶️ Manually unpause, back out, come back, finish at 1x');
+    }
+    
+    // Keep it fast otherwise
+    else if (timeRemaining > pauseBeforeEnd && v.playbackRate !== fastSpeed && !v.paused) {
+        v.playbackRate = fastSpeed;
+    }
+}, 500);
+
+console.log('✓ Will pause every ' + pauseInterval + ' seconds');
+console.log('✓ Auto-resumes after 1 second');
+console.log('✓ Final pause ' + pauseBeforeEnd + 's before end (manual)');
